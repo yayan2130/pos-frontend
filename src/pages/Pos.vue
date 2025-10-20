@@ -17,83 +17,231 @@
       </div>
 
       <!-- Grid Produk -->
-      <div class="grid grid-cols-3 gap-4 flex-1 overflow-y-auto">
+      <div class="grid grid-cols-2 gap-4">
         <div
           v-for="product in products"
           :key="product.id"
-          class="p-4 bg-white rounded-xl shadow hover:shadow-lg cursor-pointer"
-          @click="addToCart(product)"
+          class="p-4 border rounded-lg shadow hover:bg-gray-50 cursor-pointer"
+          @click="openVariantModal(product)"
         >
-          <img :src="product.image" alt="" class="w-full h-24 object-cover rounded" />
-          <p class="mt-2 font-semibold">{{ product.name }}</p>
-          <p class="text-sm text-gray-500">${{ product.price }}</p>
+          <h2 class="font-semibold">{{ product.name }}</h2>
+          <p class="text-sm text-gray-500">Rp {{ product.price }}</p>
         </div>
       </div>
     </section>
 
     <!-- Cart Section -->
-    <section class="bg-white rounded-xl shadow p-4 flex flex-col">
-      <h2 class="text-xl font-semibold mb-4">Order</h2>
+    <section class="bg-white rounded-xl shadow p-4 flex flex-col h-full">
+      <!-- Order content -->
+      <h2 class="text-lg font-semibold mb-4">Order</h2>
 
-      <div v-if="cart.length" class="space-y-4">
-        <div
-          v-for="(item, index) in cart"
-          :key="item.id"
-          class="flex items-center justify-between border-b pb-2"
-        >
-          <div>
-            <p class="font-medium">{{ item.name }}</p>
-            <p class="text-sm text-gray-500">${{ item.price }}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button class="px-2 py-1 border rounded" @click="decreaseQty(index)">-</button>
-            <span>{{ item.qty }}</span>
-            <button class="px-2 py-1 border rounded" @click="increaseQty(index)">+</button>
+      <div class="flex-1">
+        <div v-if="cart.length" class="space-y-3">
+          <div
+            v-for="(item, index) in cart"
+            :key="item.id"
+            class="flex justify-between items-center border-b pb-2"
+          >
+            <div>
+              <p class="font-medium">{{ item.name }}</p>
+              <p class="text-sm text-gray-500">Rp {{ item.price }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="decreaseQty(index)" class="px-2 py-1 border rounded">-</button>
+              <span>{{ item.qty }}</span>
+              <button @click="increaseQty(index)" class="px-2 py-1 border rounded">+</button>
+            </div>
           </div>
         </div>
+        <p v-else class="text-gray-400">No items in cart</p>
       </div>
 
-      <!-- Total -->
-      <div class="border-t pt-4">
-        <p class="flex justify-between">
+      <!-- Totals + Button pinned at bottom -->
+      <div class="mt-4 border-t pt-4">
+        <div class="flex justify-between text-sm text-gray-600">
           <span>Subtotal</span>
-          <span>${{ subtotal }}</span>
-        </p>
-        <!-- Tax -->
-        <!-- <p class="flex justify-between"> -->
-          <!-- <span>Tax (10%)</span> -->
-          <!-- <span>${{ tax }}</span> -->
-        <!-- </p> -->
-        <p class="flex justify-between font-bold text-lg">
+          <span>Rp {{ subtotal }}</span>
+        </div>
+        <div class="flex justify-between text-lg font-semibold mt-1">
           <span>Total</span>
-          <span>${{ total }}</span>
-        </p>
+          <span>Rp {{ total }}</span>
+        </div>
+
         <button
-          class="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          class="w-full bg-blue-600 text-white py-2 mt-4 rounded-lg hover:bg-blue-700 transition"
           @click="checkout"
         >
           Place Order
         </button>
       </div>
     </section>
+    <!-- Variant Modal -->
+    <!-- Modal -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
+    >
+      <div class="bg-white p-6 rounded-lg w-80 shadow-lg">
+        <h3 class="text-lg font-bold mb-4">
+          {{ selectedProduct?.name }}
+        </h3>
+
+        <!-- Step 1: pilih varian -->
+        <div v-if="!selectedVariant">
+          <h4 class="font-semibold mb-2">Pilih Varian</h4>
+          <div class="space-y-2">
+            <button
+              v-for="variant in selectedProduct.variants"
+              :key="variant"
+              class="w-full p-2 border rounded hover:bg-blue-100"
+              @click="chooseVariant(variant)"
+            >
+              {{ variant }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: pilih ukuran (jika ada) -->
+        <div v-else-if="selectedProduct.sizes">
+          <h4 class="font-semibold mb-2">Pilih Ukuran</h4>
+          <div class="space-y-2">
+            <button
+              v-for="size in selectedProduct.sizes"
+              :key="size.name"
+              class="w-full p-2 border rounded hover:bg-green-100"
+              @click="chooseSize(size)"
+            >
+              {{ size.name }} (Rp{{ selectedProduct.price + size.extra }})
+            </button>
+          </div>
+        </div>
+
+        <!-- Jika tidak ada ukuran langsung masuk -->
+        <div v-else>
+          <button class="w-full p-2 bg-blue-500 text-white rounded" @click="addToCart">
+            Tambahkan {{ selectedVariant }}
+          </button>
+        </div>
+
+        <button class="mt-4 w-full bg-red-500 text-white py-2 rounded" @click="closeModal">
+          Batal
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-3 gap-6">
+  <section class="col-span-2 flex flex-col">
+
+  </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { onMounted } from 'vue'
+import axios from 'axios'
 
-const categories = ['All', 'Breads', 'Cakes', 'Pastries', 'Sandwich']
+interface Menu {
+  id: number
+  menu_name: string
+  category: string
+  flavour: string
+  size: string
+  price: number
+}
+
+const categories = ['All', 'Makanan', 'Minuman', 'Snack']
 
 const products = ref([
-  { id: 1, name: 'Beef Crovich', price: 5.5, image: 'https://via.placeholder.com/100', categories: 'Breads' },
-  { id: 2, name: 'Buttermelt Croissant', price: 4.0, image: 'https://via.placeholder.com/100' },
-  { id: 3, name: 'Cereal Cream Donut', price: 2.45, image: 'https://via.placeholder.com/100' },
-  { id: 4, name: 'Beef Crovich', price: 5.5, image: 'https://via.placeholder.com/100' },
-  { id: 5, name: 'Buttermelt Croissant', price: 4.0, image: 'https://via.placeholder.com/100' },
-  { id: 6, name: 'Cereal Cream Donut', price: 2.45, image: 'https://via.placeholder.com/100' },
+  {
+    id: 1,
+    name: 'Popes',
+    price: 5000,
+    variants: ['Coklat', 'Balado', 'BBQ'],
+    sizes: [
+      { name: 'Kecil', extra: 0 },
+      { name: 'Besar', extra: 1000 },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Teh',
+    price: 4000,
+    variants: ['Es Teh Manis', 'Es Teh Tawar', 'Teh Panas'],
+    sizes: [
+      { name: 'Kecil', extra: 0 },
+      { name: 'Besar', extra: 1000 },
+    ],
+  },
 ])
 
+onMounted(async() => {
+  const res = await axios.get('http://127.0.0.1:8000/api/menus')
+  menus.value = res.data
+})
+
 const cart = ref<{ id: number; name: string; price: number; qty: number }[]>([])
+
+const showModal = ref(false)
+const selectedProduct = ref(null)
+const selectedVariant = ref(null)
+const selectedSize = ref(null)
+const searchQuery = ref('')
+
+// function searchProducts() {
+//   searchQuery.value = searchQuery.value.toLowerCase()
+//   return products.value.filter((product) => product.name.toLowerCase().includes(searchQuery.value))
+
+// }
+
+function openVariantModal(product) {
+  selectedProduct.value = product
+  selectedVariant.value = null
+  selectedSize.value = null
+  showModal.value = true
+}
+
+function closeModal() {
+  selectedProduct.value = null
+  selectedVariant.value = null
+  selectedSize.value = null
+  showModal.value = false
+}
+
+function chooseVariant(variant) {
+  selectedVariant.value = variant
+}
+
+function chooseSize(size) {
+  selectedSize.value = size
+  addToCart()
+}
+
+function addToCart() {
+  let finalName = selectedProduct.value.name
+  let finalPrice = selectedProduct.value.price
+
+  if (selectedVariant.value) {
+    finalName += ` (${selectedVariant.value})`
+  }
+  if (selectedSize.value) {
+    finalName += ` - ${selectedSize.value.name}`
+    finalPrice += selectedSize.value.extra
+  }
+
+  const existing = cart.value.find((item) => item.name === finalName)
+  if (existing) {
+    existing.qty++
+  } else {
+    cart.value.push({
+      name: finalName,
+      price: finalPrice,
+      qty: 1,
+    })
+  }
+
+  closeModal()
+}
 
 function increaseQty(index: number) {
   cart.value[index].qty++
@@ -108,22 +256,13 @@ function decreaseQty(index: number) {
   }
 }
 
-function addToCart(product: { id: number; name: string; price: number }) {
-  const found = cart.value.find((i) => i.id === product.id)
-  if (found) {
-    found.qty++
-  } else {
-    cart.value.push({ ...product, qty: 1 })
-  }
-}
-
 const subtotal = computed(() =>
   cart.value.reduce((sum, item) => sum + item.price * item.qty, 0).toFixed(2),
 )
 
 const tax = computed(() => (Number(subtotal.value) * 0.1).toFixed(2))
 
-const total = computed(() => (Number(subtotal.value) + Number(tax.value)).toFixed(2))
+const total = computed(() => Number(subtotal.value))
 
 function checkout() {
   alert('Order placed! Total: $' + total.value)

@@ -60,8 +60,8 @@ import { Home, ActivitySquare, FileText, Package, Users } from "lucide-vue-next"
 const menu = [
   { name: "Point of Sales", path: "/pos", icon: Home },
   { name: "Activity", path: "/activity", icon: ActivitySquare },
-  { name: "Reports", path: "/reports", icon: FileText },
+  { name: "Report", path: "/report", icon: FileText },
   { name: "Inventory", path: "/inventory", icon: Package },
-  { name: "Teams", path: "/teams", icon: Users },
+  { name: "Menu", path: "/menu", icon: FileText },
 ]
 </script>

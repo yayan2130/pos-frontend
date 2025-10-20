@@ -5,9 +5,10 @@ const router = createRouter({
   routes: [
     { path: '/', redirect: '/pos' },
     { path: '/pos', component: () => import('../pages/Pos.vue') },
-    { path: "/activity", component: () => import("../pages/Activity.vue") },
-    // { path: "/reports", component: () => import("../pages/Reports.vue") },
-    // { path: "/inventory", component: () => import("../pages/Inventory.vue") },
+    { path: '/activity', component: () => import('../pages/Activity.vue') },
+    { path: '/report', component: () => import('../pages/Report.vue') },
+    { path: '/inventory', component: () => import('../pages/Inventory.vue') },
+    { path: '/menu', component: () => import('../pages/Menu.vue') },
     // { path: "/teams", component: () => import("../pages/Teams.vue") },
   ],
 })
